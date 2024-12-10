@@ -1,10 +1,11 @@
 package com.outpatient.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 public class User {
 
@@ -17,9 +18,12 @@ public class User {
     private String email;
     private boolean verified = false;
 
+    private String resetToken;
+    private LocalDateTime resetTokenExpiration;
     // For OTP
     private String otp;
-    private long otpExpiration; // Store the expiration time
+    @Column(name = "otp_expiration", columnDefinition = "DATETIME")
+    private LocalDateTime otpExpiration;// Store the expiration time
 
     // Role field (e.g., ADMIN, DOCTOR, PATIENT)
     private String role;
@@ -73,11 +77,11 @@ public class User {
         this.otp = otp;
     }
 
-    public long getOtpExpiration() {
+    public LocalDateTime getOtpExpiration() {
         return otpExpiration;
     }
 
-    public void setOtpExpiration(long otpExpiration) {
+    public void setOtpExpiration(LocalDateTime otpExpiration) {
         this.otpExpiration = otpExpiration;
     }
 
@@ -87,5 +91,11 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+    public LocalDateTime getResetTokenExpiration() { return resetTokenExpiration; }
+    public void setResetTokenExpiration(LocalDateTime resetTokenExpiration) {
+        this.resetTokenExpiration = resetTokenExpiration;
     }
 }

@@ -1,32 +1,42 @@
 package com.outpatient.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class AppointmentRequest {
+    @NotBlank(message = "Doctor name is required")
     private String doctorName;
+
+    @NotBlank(message = "Username is required")
     private String username;
-    private String appointmentTime; // ISO-8601 format (e.g., 2024-11-27T15:00:00)
+
+    @NotNull(message = "Appointment time is required")
+    private String appointmentTime;
+
+    @NotBlank(message = "Consultation type is required")
+    private String consultationType;
+
+    @NotBlank(message = "Reason is required")
+    private String reason;
+
+    private double amount; // Amount to be paid
 
     // Getters and Setters
-    public String getDoctorName() {
-        return doctorName;
-    }
+    public String getDoctorName() { return doctorName; }
+    public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
 
-    public void setDoctorName(String doctorName) {
-        this.doctorName = doctorName;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getAppointmentTime() { return appointmentTime; }
+    public void setAppointmentTime(String appointmentTime) { this.appointmentTime = appointmentTime; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getConsultationType() { return consultationType; }
+    public void setConsultationType(String consultationType) { this.consultationType = consultationType; }
 
-    public String getAppointmentTime() {
-        return appointmentTime;
-    }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 
-    public void setAppointmentTime(String appointmentTime) {
-        this.appointmentTime = appointmentTime;
-    }
+    public double getAmount() { return amount; }
+    public void setAmount(double amount) { this.amount = amount; }
 }

@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -16,14 +18,14 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired  
+    @Autowired
     private DoctorRepository doctorRepository;
 
     @Autowired
     private EmailService emailService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Inject PasswordEncoder interface
+    private PasswordEncoder passwordEncoder;
 
     // Generate a 4-digit OTP
     public String generateOtp() {
@@ -32,12 +34,76 @@ public class UserService {
         return String.valueOf(otp);
     }
 
+    // Generate an OTP and send it via email
+    public void forgotPassword(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("User with this email does not exist.");
+        }
+
+        User user = userOptional.get();
+
+        // Generate OTP and set expiration time
+        String otp = generateOtp();
+        user.setOtp(otp);
+        user.setOtpExpiration(LocalDateTime.now().plusMinutes(5)); // OTP valid for 5 minutes
+
+        userRepository.save(user); // Save user with OTP
+
+        // Send the OTP email
+        emailService.sendOtpEmail(email, user.getUsername(), otp); // Make sure EmailService matches this signature
+    }
+
+    // Verify OTP and mark user as verified
+    public boolean verifyOtp(String username, String otp) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isEmpty()) {
+            System.out.println("User not found for username: " + username);
+            return false; // User does not exist
+        }
+
+        User user = userOptional.get();
+
+        // Verify OTP and expiration
+        if (user.getOtp() != null && user.getOtp().trim().equals(otp.trim()) &&
+                user.getOtpExpiration() != null && user.getOtpExpiration().isAfter(LocalDateTime.now())) {
+            user.setVerified(true); // Mark user as verified
+            user.setOtp(null); // Clear OTP
+            user.setOtpExpiration(null); // Clear expiration
+            userRepository.save(user); // Update user
+            return true; // Successful verification
+        }
+
+        System.out.println("OTP verification failed for user: " + username);
+        return false; // Invalid OTP or expired
+    }
+
+    public void resetPassword(String username, String newPassword) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setPassword(passwordEncoder.encode(newPassword)); // Encode new password
+            user.setOtp(null); // Clear OTP
+            user.setOtpExpiration(null); // Clear expiration
+            userRepository.save(user); // Update user
+        }
+    }
+
+    public User findByUsername(String username) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        return userOptional.orElse(null); // Return the User object or null if not found
+    }
+    // Register a new user
     public User registerUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setVerified(false); // Initially not verified
+
         String otp = generateOtp(); // Generate OTP
         user.setOtp(otp); // Store OTP
-        user.setOtpExpiration(System.currentTimeMillis() + 300000); // Set expiration for 5 minutes
+        user.setOtpExpiration(LocalDateTime.now().plusMinutes(5)); // Set expiration for 5 minutes
         userRepository.save(user); // Save user with OTP
 
         // If the user is a doctor, also save the doctor information
@@ -53,37 +119,18 @@ public class UserService {
         emailService.sendOtpEmail(user.getEmail(), user.getUsername(), otp); // Send OTP email
         return user;
     }
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
     }
 
-    public boolean verifyOtp(String username, String otp) {
-        // Fetch the user
-        User user = userRepository.findByUsername(username);
-
-        // Check if the user exists
-        if (user == null) {
-            System.out.println("User not found for username: " + username);
-            return false; // User does not exist
+    public User updateUser(Long id, User userDetails) {
+        User user = findById(id);
+        if (user != null) {
+            user.setUsername(userDetails.getUsername());
+            user.setEmail(userDetails.getEmail());
+            // Set any other relevant fields
+            return userRepository.save(user);
         }
-
-        // Log the current state
-        long currentTime = System.currentTimeMillis();
-        System.out.println("Stored OTP: " + user.getOtp());
-        System.out.println("Provided OTP: " + otp);
-        System.out.println("Current Time: " + currentTime);
-        System.out.println("OTP Expiration Time: " + user.getOtpExpiration());
-
-        // Verify OTP and expiration
-        if (user.getOtp() != null && user.getOtp().trim().equals(otp.trim()) && currentTime < user.getOtpExpiration()) {
-            user.setVerified(true); // Mark user as verified
-            user.setOtp(null); // Clear OTP
-            user.setOtpExpiration(0); // Clear expiration
-            userRepository.save(user); // Update user
-            return true; // Successful verification
-        }
-
-        System.out.println("OTP verification failed for user: " + username);
-        return false; // Invalid OTP or expired
+        return null; // Or throw an exception
     }
 }

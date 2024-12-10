@@ -20,6 +20,29 @@ public class UserController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestParam String email) {
+        try {
+            userService.forgotPassword(email);
+            return ResponseEntity.ok("OTP has been sent to your email.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Reset Password Endpoint
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestParam String resetToken,
+                                                @RequestParam String newPassword) {
+        try {
+            userService.resetPassword(resetToken, newPassword);
+            return ResponseEntity.ok("Password has been reset successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> registerUser(@RequestBody User user) {
         // Ensure role is set (default to PATIENT if not provided)
@@ -62,5 +85,31 @@ public class UserController {
         // Use simple string manipulation to extract the OTP
         String otpString = body.replaceAll("[{}\"otp: ]", ""); // Remove unwanted characters
         return otpString; // Returns the OTP as a string
+    }
+
+
+    // Endpoint to update user details
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        User updatedUser = userService.updateUser(id, userDetails);
+        return ResponseEntity.ok(updatedUser);
+    }
+    @GetMapping("/username/{username}") // Updated path
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        User user = userService.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
+    }
+
+    // Fetch user details by ID
+    @GetMapping("/{id}") // This remains for ID-based fetching
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = userService.findById(id);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
     }
 }
