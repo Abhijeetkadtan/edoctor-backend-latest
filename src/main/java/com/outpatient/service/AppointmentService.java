@@ -106,4 +106,12 @@ public class AppointmentService {
         // Implement payment gateway integration here
         return true; // Simulating a successful payment
     }
+    public String getAppointmentStatus(String username) {
+        List<Appointment> appointments = appointmentRepository.findByUser_Username(username);
+        if (appointments.isEmpty()) {
+            return "You don't have any appointments.";
+        }
+        return "Your latest appointment is on: " + appointments.get(0).getAppointmentTime() + " with status: " + appointments.get(0).getStatus();
+    }
+
 }

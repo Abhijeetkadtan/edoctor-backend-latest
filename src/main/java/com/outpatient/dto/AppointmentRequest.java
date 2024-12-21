@@ -19,6 +19,8 @@ public class AppointmentRequest {
     @NotBlank(message = "Reason is required")
     private String reason;
 
+    private String paymentId;
+
     private double amount; // Amount to be paid
 
     // Getters and Setters
@@ -39,4 +41,13 @@ public class AppointmentRequest {
 
     public double getAmount() { return amount; }
     public void setAmount(double amount) { this.amount = amount; }
+
+
+    public String getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+    }
 }

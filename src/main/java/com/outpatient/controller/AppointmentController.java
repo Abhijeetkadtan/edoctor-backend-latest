@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.outpatient.service.PaymentService;
 
 import java.util.List;
 
@@ -17,12 +18,26 @@ public class AppointmentController {
 
     @Autowired
     private AppointmentService appointmentService;
+    @Autowired
+    private PaymentService paymentService;
+    
+//    @PostMapping("/schedule")
+//    public ResponseEntity<Appointment> scheduleAppointment(@Validated @RequestBody AppointmentRequest request) {
+//        Appointment appointment = appointmentService.scheduleAppointment(request);
+//        return ResponseEntity.ok(appointment);
+//    }
+@PostMapping("/schedule")
+public ResponseEntity<?> scheduleAppointment(@RequestBody AppointmentRequest request) {
+    boolean isPaymentVerified = paymentService.verifyPayment(request.getPaymentId());
 
-    @PostMapping("/schedule")
-    public ResponseEntity<Appointment> scheduleAppointment(@Validated @RequestBody AppointmentRequest request) {
-        Appointment appointment = appointmentService.scheduleAppointment(request);
-        return ResponseEntity.ok(appointment);
+    if (!isPaymentVerified) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body("Payment verification failed.");
     }
+
+    Appointment appointment = appointmentService.scheduleAppointment(request);
+    return ResponseEntity.ok(appointment);
+}
+
 
     @GetMapping("/doctor/{doctorUsername}")
     public ResponseEntity<List<Appointment>> getAppointmentsByDoctor(@PathVariable String doctorUsername) {
